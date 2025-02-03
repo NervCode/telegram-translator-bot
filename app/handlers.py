@@ -4,6 +4,7 @@ from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
 
 from app.values import languages, speaker_value
 import app.keyboards as keyboards
@@ -12,6 +13,15 @@ from googletrans import Translator
 from gtts import gTTS
 
 router = Router()
+
+
+class Translating(StatesGroup):
+    wait = State()
+
+
+@router.message(Translating.wait)
+async def wait_handler(message: Message) -> None:
+    await message.answer('Wait... Text already translating')
 
 
 @router.message(CommandStart())
@@ -26,6 +36,8 @@ async def start_handler(message: Message) -> None:
 
 @router.message(Command('settings'))
 async def settings_handler(message: Message, state: FSMContext) -> None:
+    await state.set_state()
+
     data = await state.get_data()
     language = languages[data.get('language', 'en')]
     speaker = data.get('speaker', 'on')
@@ -40,6 +52,7 @@ async def settings_handler(message: Message, state: FSMContext) -> None:
 
 @router.message()
 async def translate_handler(message: Message, state: FSMContext) -> None:
+    await state.set_state(Translating.wait)
     translating_message = await message.answer('Translating... ')
 
     data = await state.get_data()
