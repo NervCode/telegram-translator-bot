@@ -1,12 +1,11 @@
-#TODO Translate fr
 languages = {
     'en': 'English🇺🇸',
     'ru': 'Russian🇷🇺',
     'es': 'Spanish🇪🇸',
-    'fr': 'Французский🇫🇷'
+    'fr': 'French🇫🇷'
 }
 
 speaker_value = {
-    'on': 'Диктор включен🔈',
-    'off': 'Диктор выключен🔇'
+    'on': 'Speaker has been enabled🔈',
+    'off': 'Speaker has been disabled🔇'
 }

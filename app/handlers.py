@@ -17,7 +17,9 @@ router = Router()
 @router.message(CommandStart())
 async def start_handler(message: Message) -> None:
     await message.answer(
-        text='Это бот переводчик. Выберите язык, на который переводить',
+        text='This is a translating bot,'
+             ' send him any message and he will translate it'
+             ' on selected language, settings: /settings',
         reply_markup=keyboards.inline_start
     )
 
@@ -26,47 +28,48 @@ async def start_handler(message: Message) -> None:
 async def settings_handler(message: Message, state: FSMContext) -> None:
     data = await state.get_data()
     language = languages[data.get('language', 'en')]
-    speaker = speaker_value[data.get('speaker', 'on')]
+    speaker = data.get('speaker', 'on')
 
     await message.answer(
-        text=f'Настройки переводчика'
-             f'\nПереводит: Auto'
-             f'\nПереводит на: {language}'
-             f'\nДиктор: {speaker}',
+        text=f'Bot settings'
+             f'Selected language: {language}'
+             f'Audio speaker: {speaker}',
         reply_markup=keyboards.inline_settings
     )
 
 
 @router.message()
 async def translate_handler(message: Message, state: FSMContext) -> None:
-    loading_message = await message.answer('Загрузка... ')
+    translating_message = await message.answer('Translating... ')
 
     data = await state.get_data()
     language = data.get('language', 'en')
     speaker = data.get('speaker', 'on')
 
+    # Translating
     async with Translator() as translator:
         translated_text = await translator.translate(
             text=message.text,
             dest=language
         )
 
+    # Send message
     if speaker == 'on':
         gtts = gTTS(translated_text.text, lang=language)
-        gtts.save('voice.mp3')
-        voice = FSInputFile('voice.mp3')
+        gtts.save('audio.mp3')
+        voice = FSInputFile('audio.mp3')
 
-        await loading_message.delete()
+        await translating_message.delete()
         await message.answer_voice(
             voice=voice,
-            caption=f'{message.text} | {translated_text.text}'
+            caption=translated_text.text
         )
 
-        os.remove('voice.mp3')
+        os.remove('audio.mp3')
     else:
-        await loading_message.delete()
+        await translating_message.delete()
         await message.answer(
-            text=f'{message.text} | {translated_text.text}'
+            text=translated_text.text
         )
 
 
@@ -76,7 +79,7 @@ async def ru_language_callback(callback: CallbackQuery, state: FSMContext) -> No
 
     await callback.answer()
     await callback.message.answer(
-        f'Все следующие сообщения будут переведены на {languages['ru']}'
+        f'All next messages will be translated on {languages['ru']}'
     )
 
 
@@ -86,7 +89,7 @@ async def en_language_callback(callback: CallbackQuery, state: FSMContext) -> No
 
     await callback.answer()
     await callback.message.answer(
-        f'Все следующие сообщения будут переведены на {languages['en']}'
+        f'All next messages will be translated on {languages['en']}'
     )
 
 
@@ -96,7 +99,7 @@ async def es_language_callback(callback: CallbackQuery, state: FSMContext) -> No
 
     await callback.answer()
     await callback.message.answer(
-        f'Все следующие сообщения будут переведены на {languages['es']}'
+        f'All next messages will be translated on {languages['es']}'
     )
 
 
@@ -106,7 +109,7 @@ async def fr_language_callback(callback: CallbackQuery, state: FSMContext) -> No
 
     await callback.answer()
     await callback.message.answer(
-        f'Все следующие сообщения будут переведены на {languages['fr']}'
+        f'All next messages will be translated on {languages['fr']}'
     )
 
 
@@ -128,4 +131,3 @@ async def speaker_off_callback(callback: CallbackQuery, state: FSMContext) -> No
     await callback.message.answer(
         speaker_value['off']
     )
-
