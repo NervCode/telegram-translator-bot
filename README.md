@@ -3,14 +3,11 @@ Telegram bot for translating text
 
 ## Installation
 
----
 ```bash
 git clone https://github.com/NervCode/telegram-translator-bot.git
 ```
 
 ## Usage
-
----
 
 1. Get your Telegram bot token from @BotFather
 
@@ -33,7 +30,5 @@ Congratulations! Your bot is up and running, you can use it
 - `/language` - Change language
 
 ## License
-
----
 
 Distributed under the GPL-3.0 License. See LICENSE.txt for more information.
