@@ -28,8 +28,6 @@ Congratulations! Your bot is up and running, you can use it
 
 ## Bot commands
 
----
-
 - `/start` - Restart bot
 - `/setting` - Bot settings
 - `/language` - Change language
