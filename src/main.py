@@ -1,7 +1,7 @@
 import asyncio
 from aiogram import Bot, Dispatcher
-from config_example import TOKEN
-from app.handlers import router
+from src.config_example import TOKEN
+from src.app.handlers import router
 
 bot = Bot(TOKEN)
 dp = Dispatcher()

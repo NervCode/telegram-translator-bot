@@ -5,8 +5,8 @@ from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 
-from app.values import languages, audio_value
-import app.keyboards as keyboards
+from src.app.values import languages, audio_value
+import src.app.keyboards as keyboards
 
 from googletrans import Translator
 from gtts import gTTS
