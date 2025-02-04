@@ -43,9 +43,9 @@ async def settings_handler(message: Message, state: FSMContext) -> None:
     speaker = data.get('speaker', 'on')
 
     await message.answer(
-        text=f'Bot settings'
-             f'Selected language: {language}'
-             f'Audio speaker: {speaker}',
+        text=f'Bot settings\n'
+             f'Selected language: {language}\n'
+             f'Audio speaker: {speaker}\n',
         reply_markup=keyboards.inline_settings
     )
 
@@ -84,6 +84,7 @@ async def translate_handler(message: Message, state: FSMContext) -> None:
         await message.answer(
             text=translated_text.text
         )
+    await state.clear()
 
 
 @router.callback_query(F.data == 'ru')
