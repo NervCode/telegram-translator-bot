@@ -5,7 +5,7 @@ languages = {
     'fr': 'French🇫🇷'
 }
 
-speaker_value = {
-    'on': 'Speaker has been enabled🔈',
-    'off': 'Speaker has been disabled🔇'
+audio_value = {
+    'on': 'Audio translation has been activated🔈',
+    'off': 'Audio translation has been deactivated🔇'
 }
