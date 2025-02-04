@@ -38,4 +38,4 @@ Congratulations! Your bot is up and running, you can use it
 
 ---
 
-Distributed under the GNU License. See LICENSE.txt for more information.
+Distributed under the GPL-3.0 License. See LICENSE.txt for more information.
