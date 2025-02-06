@@ -61,6 +61,7 @@ async def translate_handler(message: Message, state: FSMContext) -> None:
     await state.update_data(wait=True)
     translating_message = await message.answer('Translating... ')
 
+    user_id = str(message.from_user.id)
     language = data.get('language', 'en')
     audio = data.get('audio', 'on')
 
@@ -74,8 +75,8 @@ async def translate_handler(message: Message, state: FSMContext) -> None:
     # Sending message
     if audio == 'on':
         gtts = gTTS(translated_text.text, lang=language)
-        gtts.save('audio.mp3')
-        voice = FSInputFile('audio.mp3')
+        gtts.save(f'audio{user_id}.mp3')
+        voice = FSInputFile(f'audio{user_id}.mp3')
 
         await translating_message.delete()
         await message.answer_voice(
