@@ -84,7 +84,7 @@ async def translate_handler(message: Message, state: FSMContext) -> None:
             caption=translated_text.text
         )
 
-        os.remove('audio.mp3')
+        os.remove(f'audio{user_id}.mp3')
     else:
         await translating_message.delete()
         await message.answer(
