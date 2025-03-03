@@ -11,10 +11,10 @@ inline_start = InlineKeyboardMarkup(inline_keyboard=[
 inline_settings = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(
         text='Enable audio speaker🔈',
-        callback_data='speaker_on'
+        callback_data='on'
     )],
     [InlineKeyboardButton(
         text='Disable audio speaker🔇',
-        callback_data='speaker_off'
+        callback_data='off'
     )]
 ])

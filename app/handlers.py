@@ -1,27 +1,22 @@
-import os
-
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery, FSInputFile
+from aiogram.types import Message, CallbackQuery, BufferedInputFile
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
 
+from app.keyboards import inline_start
 from app.values import languages, speaker_value
 import app.keyboards as keyboards
-
-from googletrans import Translator
-from gtts import gTTS
+from app.transcribation import translate, text_to_audio
 
 router = Router()
 
 
-class Translating(StatesGroup):
-    wait = State()
-
-
-@router.message(Translating.wait)
-async def wait_handler(message: Message) -> None:
-    await message.answer('Wait... Text already translating')
+class States:
+    ON = 'on'
+    OFF = 'off'
+    LANGUAGE = 'language'
+    SPEAKER = 'speaker'
+    WAIT = 'wait'
 
 
 @router.message(CommandStart())
@@ -29,118 +24,82 @@ async def start_handler(message: Message) -> None:
     await message.answer(
         text='This is a translating bot,'
              ' send him any message and he will translate it'
-             ' on selected language, settings: /settings',
+             ' on selected language\nSettings: /settings',
         reply_markup=keyboards.inline_start
     )
 
 
 @router.message(Command('settings'))
-async def settings_handler(message: Message, state: FSMContext) -> None:
-    await state.set_state()
-
+async def settings_command(message: Message, state: FSMContext) -> None:
     data = await state.get_data()
-    language = languages[data.get('language', 'en')]
-    speaker = data.get('speaker', 'on')
+    language = data.get(States.LANGUAGE, 'en')
+    speaker = data.get(States.SPEAKER, States.ON)
 
     await message.answer(
-        text=f'Bot settings'
-             f'Selected language: {language}'
+        text=f'Bot settings\n'
+             f'Selected language: {languages[language]}'
              f'Audio speaker: {speaker}',
         reply_markup=keyboards.inline_settings
     )
 
 
-@router.message()
-async def translate_handler(message: Message, state: FSMContext) -> None:
-    await state.set_state(Translating.wait)
-    translating_message = await message.answer('Translating... ')
-
+@router.message(Command('language'))
+async def language_command(message: Message, state: FSMContext) -> None:
     data = await state.get_data()
-    language = data.get('language', 'en')
-    speaker = data.get('speaker', 'on')
+    language = data.get(States.LANGUAGE, 'en')
 
-    # Translating
-    async with Translator() as translator:
-        translated_text = await translator.translate(
-            text=message.text,
-            dest=language
-        )
+    await message.answer(
+        text=f'You can change the language using the buttons below,'
+             f' currently {languages[language]} is selected',
+        reply_markup=inline_start
+    )
 
-    # Send message
-    if speaker == 'on':
-        gtts = gTTS(translated_text.text, lang=language)
-        gtts.save('audio.mp3')
-        voice = FSInputFile('audio.mp3')
 
-        await translating_message.delete()
-        await message.answer_voice(
-            voice=voice,
-            caption=translated_text.text
-        )
+@router.message(F.text)
+async def translate_handler(message: Message, state: FSMContext) -> None:
+    data = await state.get_data()
 
-        os.remove('audio.mp3')
+    if data.get(States.WAIT, False):
+        await message.answer('Please wait... You already send the request')
+        return
+
+    await state.update_data(wait=True)
+    await message.bot.send_chat_action(message.chat.id, 'typing')
+
+    language = data.get(States.LANGUAGE, 'en')
+    speaker = data.get(States.SPEAKER, States.ON)
+    translated_text = await translate(message.text, language)
+
+    if speaker == States.ON:
+        audio_bytes = text_to_audio(message.text, language)
+        audio = BufferedInputFile(audio_bytes, 'audio.mp3')
+
+        await message.answer_voice(voice=audio, caption=translated_text)
     else:
-        await translating_message.delete()
-        await message.answer(
-            text=translated_text.text
-        )
+        await message.answer(text=translated_text)
+
+    await state.update_data(wait=False)
 
 
-@router.callback_query(F.data == 'ru')
-async def ru_language_callback(callback: CallbackQuery, state: FSMContext) -> None:
-    await state.update_data(language='ru')
+@router.callback_query(F.data.in_(('ru', 'en', 'es', 'fr')))
+async def change_language_callback(callback: CallbackQuery,
+                                   state: FSMContext) -> None:
+    language: str = callback.data
+    await state.update_data(language=language)
 
     await callback.answer()
     await callback.message.answer(
-        f'All next messages will be translated on {languages['ru']}'
+        f'All next messages will be translated on {languages[language]}'
     )
 
 
-@router.callback_query(F.data == 'en')
-async def en_language_callback(callback: CallbackQuery, state: FSMContext) -> None:
-    await state.update_data(language='en')
+@router.callback_query(F.data.in_(('on', 'off')))
+async def change_speaker_callback(callback: CallbackQuery,
+                                  state: FSMContext) -> None:
+    speaker: str = callback.data
+    await state.update_data(speaker=speaker)
 
     await callback.answer()
     await callback.message.answer(
-        f'All next messages will be translated on {languages['en']}'
-    )
-
-
-@router.callback_query(F.data == 'es')
-async def es_language_callback(callback: CallbackQuery, state: FSMContext) -> None:
-    await state.update_data(language='es')
-
-    await callback.answer()
-    await callback.message.answer(
-        f'All next messages will be translated on {languages['es']}'
-    )
-
-
-@router.callback_query(F.data == 'fr')
-async def fr_language_callback(callback: CallbackQuery, state: FSMContext) -> None:
-    await state.update_data(language='fr')
-
-    await callback.answer()
-    await callback.message.answer(
-        f'All next messages will be translated on {languages['fr']}'
-    )
-
-
-@router.callback_query(F.data == 'speaker_on')
-async def speaker_on_callback(callback: CallbackQuery, state: FSMContext) -> None:
-    await state.update_data(speaker='on')
-
-    await callback.answer()
-    await callback.message.answer(
-        speaker_value['on']
-    )
-
-
-@router.callback_query(F.data == 'speaker_off')
-async def speaker_off_callback(callback: CallbackQuery, state: FSMContext) -> None:
-    await state.update_data(speaker='off')
-
-    await callback.answer()
-    await callback.message.answer(
-        speaker_value['off']
+        speaker_value[speaker]
     )
