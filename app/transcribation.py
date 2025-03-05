@@ -1,5 +1,6 @@
 from io import BytesIO
 
+from aiogram.types import BufferedInputFile
 from googletrans import Translator
 from gtts import gTTS
 
@@ -10,9 +11,10 @@ async def translate(text: str, language: str) -> str:
         return translated.text
 
 
-def text_to_audio(text: str, language: str) -> bytes:
+def text_to_audio(text: str, language: str) -> BufferedInputFile:
     with BytesIO() as buffer:
         tts = gTTS(text, lang=language)
         tts.write_to_fp(buffer)
         buffer.seek(0)
-        return buffer.getvalue()
+        value = buffer.getvalue()
+        return BufferedInputFile(value, 'audio.mp3')

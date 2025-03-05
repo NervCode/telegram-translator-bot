@@ -68,17 +68,19 @@ async def translate_handler(message: Message, state: FSMContext) -> None:
 
     language = data.get(States.LANGUAGE, 'en')
     speaker = data.get(States.SPEAKER, States.ON)
-    translated_text = await translate(message.text, language)
 
-    if speaker == States.ON:
-        audio_bytes = text_to_audio(message.text, language)
-        audio = BufferedInputFile(audio_bytes, 'audio.mp3')
+    try:
+        translated_text = await translate(message.text, language)
 
-        await message.answer_voice(voice=audio, caption=translated_text)
-    else:
-        await message.answer(text=translated_text)
-
-    await state.update_data(wait=False)
+        if speaker == States.ON:
+            audio = text_to_audio(message.text, language)
+            await message.answer_voice(voice=audio, caption=translated_text)
+        else:
+            await message.answer(text=translated_text)
+    except:
+        await message.answer("Error!")
+    finally:
+        await state.update_data(wait=False)
 
 
 @router.callback_query(F.data.in_(('ru', 'en', 'es', 'fr')))
